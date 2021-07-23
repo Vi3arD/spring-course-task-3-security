@@ -1,0 +1,87 @@
+###
+
+// @no-cookie-jar
+POST http://localhost:8080/api/media
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+
+--WebAppBoundary
+Content-Disposition: form-data; name="file"; filename="jakarta.png"
+Content-Type: image/png
+
+< ./jakarta.png
+--WebAppBoundary--
+
+
+> {%
+client.test("Request executed successfully", function() {
+  client.assert(response.status === 200, "Response status is not 200");
+  client.global.set("avatar", response.body.path);
+});
+%}
+
+###
+
+// @no-cookie-jar
+POST http://localhost:8080/api/users/registrations
+Content-Type: application/json
+
+{
+  "username": "user123456",
+  "password": "qwerty123456",
+  "name": "admin",
+  "avatar": "{{avatar}}"
+}
+
+> {%
+client.test("Request executed successfully", function() {
+  client.assert(response.status === 200, "Response status is not 200");
+  client.global.set("token", response.body.token)
+});
+%}
+
+###
+
+// @no-cookie-jar
+GET http://localhost:8080/api/users/me
+X-Token: {{token}}
+
+> {%
+client.test("Request executed successfully", function() {
+  client.assert(response.status === 200, "Response status is not 200");
+});
+%}
+
+###
+
+// @no-cookie-jar
+GET http://localhost:8080/api/users/me
+X-Token: {{$uuid}}
+
+> {%
+client.test("Request executed successfully", function() {
+  client.assert(response.status === 401, "Response status is not 401");
+});
+%}
+
+###
+
+// @no-cookie-jar
+GET http://localhost:8080/api/users/me
+Authorization: Basic user123456 qwerty123456
+
+> {%
+client.test("Request executed successfully", function() {
+  client.assert(response.status === 200, "Response status is not 200");
+});
+%}
+
+###
+
+GET http://localhost:8080/api/posts
+Authorization: Basic user123456 qwerty123456
+
+> {%
+client.test("Request executed successfully", function() {
+  client.assert(response.status === 200, "Response status is not 200");
+});
+%}
