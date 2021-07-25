@@ -24,21 +24,17 @@ public class PostEntity {
     @JoinColumn(name = "author_id")
     private UserEntity author;
 
-    @ManyToOne
-    @JoinColumn(name = "parent_id")
-    private PostEntity parent;
-
     private String content;
 
     private String attachment;
-
-    @OneToMany(fetch = FetchType.EAGER, mappedBy = "parent", orphanRemoval = true)
-    private List<PostEntity> posts;
 
     @Column(insertable = false, updatable = false)
     private Instant created;
 
     private Instant deleted;
+
+    @Column(name = "deleted_by_admin")
+    private boolean deletedByAdmin;
 
     private Instant edited;
 

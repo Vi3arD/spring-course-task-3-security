@@ -4,15 +4,21 @@ import com.example.api.dto.PostCreateRequestDto;
 import com.example.api.dto.PostEditRequestDto;
 import com.example.api.dto.PostResponseDto;
 import com.example.api.entity.PostEntity;
+import com.example.api.entity.UserEntity;
+import com.example.api.exception.PostModificationDeniedException;
+import com.example.api.exception.PostNotFoundException;
 import com.example.api.mapper.PostMapper;
 import com.example.api.repository.PostRepository;
+import com.example.api.role.Roles;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -24,72 +30,98 @@ public class PostService {
 
     public List<PostResponseDto> findAll(int page, int count) {
         return mapper.fromEntities(
-                repository.findAll(PageRequest.of(page, count, idAscSort)).getContent()
+                repository.findByDeletedIsNull(PageRequest.of(page, count, idAscSort))
         );
     }
 
-    public List<PostResponseDto> getSubPostsByParentId(long parentId) {
-        return mapper.fromEntities(repository.findByParent_Id(parentId));
+    public PostResponseDto findById(long id) {
+        return mapper.fromEntity(
+                repository.findByDeletedIsNullAndId(id).orElseThrow(PostNotFoundException::new)
+        );
     }
 
     public void create(PostCreateRequestDto request) {
-        PostEntity parent = null;
-
-        if (request.getParent() != 0) {
-            parent = repository.getById(request.getParent());
-        }
-
         repository.save(
                 PostEntity.builder()
                         .content(request.getContent())
                         .author(userService.meLikeEntity())
-                        .parent(parent)
                         .attachment(request.getAttachment())
                         .build()
         );
     }
 
     public void edit(PostEditRequestDto request) {
-        PostEntity post = repository.findById(request.getId()).orElseThrow();
+        PostEntity post = repository.findByDeletedIsNullAndId(request.getId()).orElseThrow(PostNotFoundException::new);
+
+        if (post.getAuthor().getId() != userService.meLikeEntity().getId()) {
+            throw new PostModificationDeniedException();
+        }
+
         post.setContent(request.getContent());
         post.setEdited(Instant.now());
-        if(request.getAttachment() != null){
+        if (request.getAttachment() != null) {
             post.setAttachment(request.getAttachment());
         }
         repository.save(post);
     }
 
-    public void delete(long id){
-        setDeletedMark(id, Instant.now());
+    public void delete(long id) {
+        PostEntity post = repository.findById(id).orElseThrow(PostNotFoundException::new);
+        boolean admin = isAdmin();
+
+        if (post.getAuthor().getId() == userService.meLikeEntity().getId() || admin) {
+            if (admin) {
+                post.setDeletedByAdmin(true);
+            }
+
+            post.setDeleted(Instant.now());
+            repository.save(post);
+        } else {
+            throw new PostModificationDeniedException();
+        }
     }
 
-    public void recover(long id){
-        setDeletedMark(id, null);
+    public void recover(long id) {
+        PostEntity post = repository.findById(id).orElseThrow(PostNotFoundException::new);
+        boolean admin = isAdmin();
+
+        if (post.isDeletedByAdmin() && !admin) {
+            throw new PostModificationDeniedException();
+        }
+
+        if ((post.getAuthor().getId() == userService.meLikeEntity().getId() || admin)) {
+            if (admin) {
+                post.setDeletedByAdmin(false);
+            }
+
+            post.setDeleted(null);
+            repository.save(post);
+        } else {
+            throw new PostModificationDeniedException();
+        }
     }
 
-    public void like(long id){
-        PostEntity post = repository.findById(id).orElseThrow();
+    public void like(long id) {
+        PostEntity post = repository.findByDeletedIsNullAndId(id).orElseThrow(PostNotFoundException::new);
         int likes = post.getLikes() + 1;
         post.setLikes(likes);
         repository.save(post);
     }
 
-    public void dislike(long id){
-        PostEntity post = repository.findById(id).orElseThrow();
+    public void dislike(long id) {
+        PostEntity post = repository.findByDeletedIsNullAndId(id).orElseThrow(PostNotFoundException::new);
         int dislikes = post.getDislikes() + 1;
         post.setDislikes(dislikes);
         repository.save(post);
     }
 
-    private void setDeletedMark(long id, Instant mark){
-        PostEntity post = repository.findById(id).orElseThrow();
-        if(!post.getPosts().isEmpty()){
-            for(PostEntity sub : post.getPosts()){
-                sub.setDeleted(mark);
-            }
-        }
-        post.setDeleted(mark);
-        repository.save(post);
+    private boolean isAdmin() {
+        return userService.meLikeEntity()
+                .getAuthorities()
+                .stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.toList())
+                .contains(Roles.ADMIN);
     }
 
 }

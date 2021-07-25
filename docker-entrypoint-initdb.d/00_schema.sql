@@ -22,15 +22,15 @@ CREATE TABLE tokens
 
 CREATE TABLE posts
 (
-    id         BIGSERIAL PRIMARY KEY,
-    author_id  BIGINT      NOT NULL REFERENCES users,
-    parent_id  BIGINT               REFERENCES posts,
-    content    TEXT        NOT NULL,
-    attachment TEXT,
-    created    timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    deleted    timestamptz          DEFAULT NULL,
-    edited     timestamptz          DEFAULT NULL,
-    likes      BIGINT      NOT NULL DEFAULT 0,
-    dislikes   BIGINT      NOT NULL DEFAULT 0
+    id                  BIGSERIAL PRIMARY KEY,
+    author_id           BIGINT      NOT NULL REFERENCES users,
+    content             TEXT        NOT NULL,
+    attachment          TEXT,
+    created             timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted             timestamptz          DEFAULT NULL,
+    deleted_by_admin    BOOLEAN     NOT NULL DEFAULT FALSE,
+    edited              timestamptz          DEFAULT NULL,
+    likes               BIGINT      NOT NULL DEFAULT 0,
+    dislikes            BIGINT      NOT NULL DEFAULT 0
 );
 

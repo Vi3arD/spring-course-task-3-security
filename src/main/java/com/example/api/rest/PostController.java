@@ -28,8 +28,8 @@ public class PostController {
     }
 
     @GetMapping("/{id}")
-    public List<PostResponseDto> getSubPostsByParentId(@RequestParam @Min(0) long id) {
-        return service.getSubPostsByParentId(id);
+    public PostResponseDto getById(@RequestParam @Min(0) long id) {
+        return service.findById(id);
     }
 
     @PostMapping
@@ -42,7 +42,7 @@ public class PostController {
         service.edit(request);
     }
 
-    @DeleteMapping
+    @DeleteMapping("/{id}")
     public void delete(@RequestParam @Min(0) long id) {
         service.delete(id);
     }

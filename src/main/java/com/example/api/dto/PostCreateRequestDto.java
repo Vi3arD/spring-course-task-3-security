@@ -11,6 +11,5 @@ public class PostCreateRequestDto {
 
     private String content;
     private String attachment;
-    private long parent;
 
 }
