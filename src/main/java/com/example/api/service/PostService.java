@@ -53,7 +53,7 @@ public class PostService {
     public void edit(PostEditRequestDto request) {
         PostEntity post = repository.findByDeletedIsNullAndId(request.getId()).orElseThrow(PostNotFoundException::new);
 
-        if (post.getAuthor().getId() != userService.meLikeEntity().getId()) {
+        if (post.getAuthor().getId() != userService.me().getId()) {
             throw new PostModificationDeniedException();
         }
 
@@ -69,7 +69,7 @@ public class PostService {
         PostEntity post = repository.findById(id).orElseThrow(PostNotFoundException::new);
         boolean admin = isAdmin();
 
-        if (post.getAuthor().getId() == userService.meLikeEntity().getId() || admin) {
+        if (post.getAuthor().getId() == userService.me().getId() || admin) {
             if (admin) {
                 post.setDeletedByAdmin(true);
             }
@@ -89,7 +89,7 @@ public class PostService {
             throw new PostModificationDeniedException();
         }
 
-        if ((post.getAuthor().getId() == userService.meLikeEntity().getId() || admin)) {
+        if ((post.getAuthor().getId() == userService.me().getId() || admin)) {
             if (admin) {
                 post.setDeletedByAdmin(false);
             }
