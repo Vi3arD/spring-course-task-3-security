@@ -62,7 +62,6 @@ public class PostService {
         if (request.getAttachment() != null) {
             post.setAttachment(request.getAttachment());
         }
-        repository.save(post);
     }
 
     public void delete(long id) {
@@ -75,7 +74,6 @@ public class PostService {
             }
 
             post.setDeleted(Instant.now());
-            repository.save(post);
         } else {
             throw new PostModificationDeniedException();
         }
@@ -95,7 +93,6 @@ public class PostService {
             }
 
             post.setDeleted(null);
-            repository.save(post);
         } else {
             throw new PostModificationDeniedException();
         }
@@ -105,14 +102,12 @@ public class PostService {
         PostEntity post = repository.findByDeletedIsNullAndId(id).orElseThrow(PostNotFoundException::new);
         int likes = post.getLikes() + 1;
         post.setLikes(likes);
-        repository.save(post);
     }
 
     public void dislike(long id) {
         PostEntity post = repository.findByDeletedIsNullAndId(id).orElseThrow(PostNotFoundException::new);
         int dislikes = post.getDislikes() + 1;
         post.setDislikes(dislikes);
-        repository.save(post);
     }
 
     private boolean isAdmin() {
