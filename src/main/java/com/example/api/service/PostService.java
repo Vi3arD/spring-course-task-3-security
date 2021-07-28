@@ -99,15 +99,11 @@ public class PostService {
     }
 
     public void like(long id) {
-        PostEntity post = repository.findByDeletedIsNullAndId(id).orElseThrow(PostNotFoundException::new);
-        int likes = post.getLikes() + 1;
-        post.setLikes(likes);
+        repository.like(id);
     }
 
     public void dislike(long id) {
-        PostEntity post = repository.findByDeletedIsNullAndId(id).orElseThrow(PostNotFoundException::new);
-        int dislikes = post.getDislikes() + 1;
-        post.setDislikes(dislikes);
+        repository.dislike(id);
     }
 
     private boolean isAdmin() {
