@@ -24,7 +24,6 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
-@EnableGlobalMethodSecurity(prePostEnabled = true)
 public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
   @Setter(onMethod_ = {@Autowired})
   private TokenAuthenticationProvider tokenAuthenticationProvider;
